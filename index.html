@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pikachu Runner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <div class="hud">
+        <div class="scoreboard">Score: <span id="score">0</span></div>
+      </div>
+      <img id="win-gif" class="win-gif" src="assets/pikachu_happy.gif" alt="Happy Pikachu celebration" />
+      <canvas id="game" width="960" height="540" aria-label="Pikachu runner game"></canvas>
+      <div class="instructions">
+        Press <kbd>Space</kbd>, <kbd>W</kbd>, or <kbd>↑</kbd> to jump.
+      </div>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>
