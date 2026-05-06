@@ -53,8 +53,17 @@ jumpAudio.volume = 0.35;
 const urlParams = new URLSearchParams(window.location.search);
 const previewScore = Number.parseInt(urlParams.get("score") || "", 10);
 const playScore = Number.parseInt(urlParams.get("playScore") || "", 10);
+const showcaseSeason = (urlParams.get("showcase") || "").toLowerCase();
 const previewMode = Number.isFinite(previewScore);
 const playMode = Number.isFinite(playScore);
+const compactMode = window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+const showcaseScores = {
+  summer: 0,
+  autumn: 25,
+  winter: 50,
+  spring: 75,
+};
+const showcaseMode = Object.prototype.hasOwnProperty.call(showcaseScores, showcaseSeason);
 const pixelFont = {
   A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
   B: ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
@@ -207,7 +216,9 @@ function resetGame() {
   game.speed = 6;
   game.distance = 0;
   game.frame = 0;
-  game.score = previewMode
+  game.score = showcaseMode
+    ? showcaseScores[showcaseSeason]
+    : previewMode
     ? Math.max(0, Math.min(100, previewScore))
     : playMode
       ? Math.max(0, Math.min(99, playScore))
@@ -229,12 +240,82 @@ function resetGame() {
   if (game.gameWon) {
     spawnConfettiBurst();
   }
+  if (showcaseMode) {
+    setupShowcaseScene();
+  }
   if (audioState.bgmStarted && !previewMode) {
     bgmAudio.currentTime = 0;
     void bgmAudio.play().catch(() => {});
   }
   syncWinGifVisibility();
   updateScore();
+}
+
+function setupShowcaseScene() {
+  player.y = groundY - player.height;
+  player.velocityY = 0;
+  player.jumping = false;
+  player.jumpsUsed = 0;
+
+  game.obstacles.push(
+    {
+      kind: "bush",
+      x: 520,
+      y: groundY - 66,
+      width: 100,
+      height: 66,
+      variant: "bush1",
+    },
+    {
+      kind: "boulder",
+      x: 700,
+      y: groundY - 82,
+      width: 82,
+      height: 82,
+    },
+    {
+      kind: "ghastly",
+      x: 620,
+      y: groundY - 210,
+      baseY: groundY - 210,
+      width: 72,
+      height: 72,
+      driftOffset: 0,
+      driftSpeed: 0,
+      driftRange: 0,
+      swayStrength: 0,
+    }
+  );
+
+  game.collectibles.push(
+    {
+      kind: "berry",
+      berryStyle: berryImageKeys[0],
+      value: 1,
+      x: 420,
+      y: groundY - 165,
+      width: 48,
+      height: 48,
+    },
+    {
+      kind: "berry",
+      berryStyle: berryImageKeys[3],
+      value: 1,
+      x: 575,
+      y: groundY - 245,
+      width: 48,
+      height: 48,
+    },
+    {
+      kind: "ketchup",
+      berryStyle: null,
+      value: 10,
+      x: 790,
+      y: groundY - 170,
+      width: 42,
+      height: 52,
+    }
+  );
 }
 
 function updateScore() {
@@ -247,7 +328,8 @@ function syncWinGifVisibility() {
 
 function spawnConfettiBurst() {
   game.confetti.length = 0;
-  for (let i = 0; i < 120; i += 1) {
+  const pieceCount = compactMode ? 64 : 120;
+  for (let i = 0; i < pieceCount; i += 1) {
     game.confetti.push({
       x: Math.random() * canvas.width,
       y: -20 - Math.random() * canvas.height * 0.4,
@@ -323,7 +405,7 @@ function shiftSpawnAwayFromOverlap(entity, others, padX, padY, minGap) {
 }
 
 function jump() {
-  if (previewMode) {
+  if (previewMode || showcaseMode) {
     return;
   }
 
@@ -470,7 +552,7 @@ function intersects(a, b) {
 }
 
 function update() {
-  if (previewMode || game.gameOver || game.gameWon) {
+  if (previewMode || showcaseMode || game.gameOver || game.gameWon) {
     if (game.gameWon) {
       updateConfetti();
     }
@@ -606,7 +688,9 @@ function drawBackground() {
   drawCloud(110, 82, 1);
   drawCloud(350, 58, 0.78);
   drawCloud(690, 102, 1.06);
-  drawCloud(850, 72, 0.68);
+  if (!compactMode) {
+    drawCloud(850, 72, 0.68);
+  }
 
   ctx.fillStyle = season.hillTop;
   ctx.fillRect(0, 238, canvas.width, 32);
@@ -622,7 +706,7 @@ function drawBackground() {
   ctx.fill();
 
   const townScroll = -(game.distance * 0.18) % 310;
-  for (let i = -1; i < 5; i += 1) {
+  for (let i = -1; i < (compactMode ? 4 : 5); i += 1) {
     const baseX = townScroll + i * 310;
     drawHouse(baseX + 10, 246, "#f8edd6", "#cd5345");
     drawHouse(baseX + 136, 226, "#f5e4c6", "#d25b4f");
@@ -633,21 +717,21 @@ function drawBackground() {
 
   ctx.fillStyle = season.grassBase;
   ctx.fillRect(0, 308, canvas.width, 78);
-  drawGrassTiles(0, 308, canvas.width, 78, 16, season);
+  drawGrassTiles(0, 308, canvas.width, 78, compactMode ? 24 : 16, season);
 
   ctx.fillStyle = season.pathEdge;
   ctx.fillRect(0, 386, canvas.width, 22);
-  drawPathEdge((game.distance * 0.5) % 24, season);
+  drawPathEdge((game.distance * 0.5) % (compactMode ? 32 : 24), season, compactMode ? 32 : 24);
 
   ctx.fillStyle = season.pathBase;
   ctx.fillRect(0, groundY + 8, canvas.width, 88);
-  drawPathTiles((game.distance * 0.75) % 24, season);
+  drawPathTiles((game.distance * 0.75) % (compactMode ? 32 : 24), season, compactMode ? 32 : 24, compactMode ? 24 : 20);
 
-  for (let x = 0; x < canvas.width; x += 88) {
+  for (let x = 0; x < canvas.width; x += (compactMode ? 110 : 88)) {
     drawFence(x - (game.distance * 0.5) % 88, 366);
   }
 
-  for (let x = 30; x < canvas.width; x += 180) {
+  for (let x = 30; x < canvas.width; x += (compactMode ? 240 : 180)) {
     drawFlowerBed(x - (game.distance * 0.2) % 180, 322, season);
   }
 }
@@ -784,20 +868,23 @@ function drawGrassTiles(x, y, width, height, size, season) {
   }
 }
 
-function drawPathEdge(scroll, season) {
-  for (let x = -24; x < canvas.width + 24; x += 24) {
-    ctx.fillStyle = ((x + scroll) / 24) % 2 === 0 ? season.pathEdgeAlt : season.pathEdge;
-    ctx.fillRect(x + scroll, 386, 24, 10);
+function drawPathEdge(scroll, season, tileWidth = 24) {
+  for (let x = -tileWidth; x < canvas.width + tileWidth; x += tileWidth) {
+    ctx.fillStyle = ((x + scroll) / tileWidth) % 2 === 0 ? season.pathEdgeAlt : season.pathEdge;
+    ctx.fillRect(x + scroll, 386, tileWidth, 10);
     ctx.fillStyle = season.pathEdgeHighlight;
-    ctx.fillRect(x + scroll, 396, 24, 4);
+    ctx.fillRect(x + scroll, 396, tileWidth, 4);
   }
 }
 
-function drawPathTiles(scroll, season) {
-  for (let y = groundY + 8; y < canvas.height; y += 20) {
-    for (let x = -24; x < canvas.width + 24; x += 24) {
-      ctx.fillStyle = (Math.floor((x + scroll) / 24) + Math.floor(y / 20)) % 2 === 0 ? season.pathTileA : season.pathTileB;
-      ctx.fillRect(x + scroll, y, 24, 20);
+function drawPathTiles(scroll, season, tileWidth = 24, tileHeight = 20) {
+  for (let y = groundY + 8; y < canvas.height; y += tileHeight) {
+    for (let x = -tileWidth; x < canvas.width + tileWidth; x += tileWidth) {
+      ctx.fillStyle =
+        (Math.floor((x + scroll) / tileWidth) + Math.floor(y / tileHeight)) % 2 === 0
+          ? season.pathTileA
+          : season.pathTileB;
+      ctx.fillRect(x + scroll, y, tileWidth, tileHeight);
       ctx.fillStyle = season.pathPebble;
       ctx.fillRect(x + scroll + 4, y + 5, 5, 5);
       ctx.fillRect(x + scroll + 14, y + 11, 4, 4);
