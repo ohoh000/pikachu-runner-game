@@ -101,10 +101,12 @@ kbd {
 
   .game-shell {
     padding: 6px;
+    width: 100%;
   }
 
   .game-frame {
-    width: min(100%, calc((100svh - 88px) * 16 / 9));
+    width: min(calc(100vw - 12px), calc((100svh - 88px) * 16 / 9));
+    max-width: 100%;
   }
 
   canvas {
@@ -131,10 +133,12 @@ kbd {
 
   .game-shell {
     padding: 2px;
+    width: 100%;
   }
 
   .game-frame {
-    width: min(100%, calc((100svh - 72px) * 16 / 9));
+    width: min(calc(100vw - 8px), calc((100svh - 72px) * 16 / 9));
+    max-width: 100%;
   }
 
   canvas {
