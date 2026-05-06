@@ -57,6 +57,7 @@ const showcaseSeason = (urlParams.get("showcase") || "").toLowerCase();
 const previewMode = Number.isFinite(previewScore);
 const playMode = Number.isFinite(playScore);
 const compactMode = window.matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+const ultraCompactMode = window.matchMedia("(max-width: 480px), (max-height: 740px)").matches;
 const showcaseScores = {
   summer: 0,
   autumn: 25,
@@ -328,7 +329,7 @@ function syncWinGifVisibility() {
 
 function spawnConfettiBurst() {
   game.confetti.length = 0;
-  const pieceCount = compactMode ? 64 : 120;
+  const pieceCount = ultraCompactMode ? 36 : compactMode ? 64 : 120;
   for (let i = 0; i < pieceCount; i += 1) {
     game.confetti.push({
       x: Math.random() * canvas.width,
@@ -687,7 +688,9 @@ function drawBackground() {
   ctx.fillStyle = season.cloud;
   drawCloud(110, 82, 1);
   drawCloud(350, 58, 0.78);
-  drawCloud(690, 102, 1.06);
+  if (!ultraCompactMode) {
+    drawCloud(690, 102, 1.06);
+  }
   if (!compactMode) {
     drawCloud(850, 72, 0.68);
   }
@@ -706,7 +709,7 @@ function drawBackground() {
   ctx.fill();
 
   const townScroll = -(game.distance * 0.18) % 310;
-  for (let i = -1; i < (compactMode ? 4 : 5); i += 1) {
+  for (let i = -1; i < (ultraCompactMode ? 3 : compactMode ? 4 : 5); i += 1) {
     const baseX = townScroll + i * 310;
     drawHouse(baseX + 10, 246, "#f8edd6", "#cd5345");
     drawHouse(baseX + 136, 226, "#f5e4c6", "#d25b4f");
@@ -717,22 +720,34 @@ function drawBackground() {
 
   ctx.fillStyle = season.grassBase;
   ctx.fillRect(0, 308, canvas.width, 78);
-  drawGrassTiles(0, 308, canvas.width, 78, compactMode ? 24 : 16, season);
+  drawGrassTiles(0, 308, canvas.width, 78, ultraCompactMode ? 32 : compactMode ? 24 : 16, season);
 
   ctx.fillStyle = season.pathEdge;
   ctx.fillRect(0, 386, canvas.width, 22);
-  drawPathEdge((game.distance * 0.5) % (compactMode ? 32 : 24), season, compactMode ? 32 : 24);
+  drawPathEdge(
+    (game.distance * 0.5) % (ultraCompactMode ? 40 : compactMode ? 32 : 24),
+    season,
+    ultraCompactMode ? 40 : compactMode ? 32 : 24
+  );
 
   ctx.fillStyle = season.pathBase;
   ctx.fillRect(0, groundY + 8, canvas.width, 88);
-  drawPathTiles((game.distance * 0.75) % (compactMode ? 32 : 24), season, compactMode ? 32 : 24, compactMode ? 24 : 20);
+  drawPathTiles(
+    (game.distance * 0.75) % (ultraCompactMode ? 40 : compactMode ? 32 : 24),
+    season,
+    ultraCompactMode ? 40 : compactMode ? 32 : 24,
+    ultraCompactMode ? 28 : compactMode ? 24 : 20,
+    !compactMode
+  );
 
-  for (let x = 0; x < canvas.width; x += (compactMode ? 110 : 88)) {
+  for (let x = 0; x < canvas.width; x += (ultraCompactMode ? 140 : compactMode ? 110 : 88)) {
     drawFence(x - (game.distance * 0.5) % 88, 366);
   }
 
-  for (let x = 30; x < canvas.width; x += (compactMode ? 240 : 180)) {
-    drawFlowerBed(x - (game.distance * 0.2) % 180, 322, season);
+  if (!ultraCompactMode) {
+    for (let x = 30; x < canvas.width; x += (compactMode ? 240 : 180)) {
+      drawFlowerBed(x - (game.distance * 0.2) % 180, 322, season);
+    }
   }
 }
 
@@ -877,7 +892,7 @@ function drawPathEdge(scroll, season, tileWidth = 24) {
   }
 }
 
-function drawPathTiles(scroll, season, tileWidth = 24, tileHeight = 20) {
+function drawPathTiles(scroll, season, tileWidth = 24, tileHeight = 20, drawPebbles = true) {
   for (let y = groundY + 8; y < canvas.height; y += tileHeight) {
     for (let x = -tileWidth; x < canvas.width + tileWidth; x += tileWidth) {
       ctx.fillStyle =
@@ -885,9 +900,11 @@ function drawPathTiles(scroll, season, tileWidth = 24, tileHeight = 20) {
           ? season.pathTileA
           : season.pathTileB;
       ctx.fillRect(x + scroll, y, tileWidth, tileHeight);
-      ctx.fillStyle = season.pathPebble;
-      ctx.fillRect(x + scroll + 4, y + 5, 5, 5);
-      ctx.fillRect(x + scroll + 14, y + 11, 4, 4);
+      if (drawPebbles) {
+        ctx.fillStyle = season.pathPebble;
+        ctx.fillRect(x + scroll + 4, y + 5, 5, 5);
+        ctx.fillRect(x + scroll + 14, y + 11, 4, 4);
+      }
     }
   }
 }

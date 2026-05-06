@@ -22,7 +22,7 @@ body {
 
 .game-shell {
   position: relative;
-  width: min(960px, 100%);
+  width: min(960px, 100%, calc((100dvh - 110px) * 16 / 9));
   padding: 18px;
   display: flex;
   flex-direction: column;
@@ -59,8 +59,9 @@ body {
 
 canvas {
   display: block;
-  width: min(100%, calc((100dvh - 150px) * 16 / 9));
+  width: 100%;
   max-width: 100%;
+  max-height: calc(100dvh - 110px);
   height: auto;
   aspect-ratio: 16 / 9;
   border: 5px solid #183153;
@@ -96,12 +97,14 @@ kbd {
 
   .game-shell {
     padding: 6px;
+    width: min(100%, calc((100dvh - 88px) * 16 / 9));
   }
 
   canvas {
-    width: min(100%, calc((100dvh - 112px) * 16 / 9));
+    max-height: calc(100dvh - 88px);
     border-width: 4px;
     border-radius: 18px;
+    box-shadow: 0 18px 30px rgba(24, 49, 83, 0.16);
   }
 
   .instructions {
@@ -122,12 +125,14 @@ kbd {
 
   .game-shell {
     padding: 2px;
+    width: min(100%, calc((100dvh - 72px) * 16 / 9));
   }
 
   canvas {
-    width: min(100%, calc((100dvh - 96px) * 16 / 9));
+    max-height: calc(100dvh - 72px);
     border-width: 3px;
     border-radius: 14px;
+    box-shadow: 0 12px 20px rgba(24, 49, 83, 0.12);
   }
 
   .instructions {
